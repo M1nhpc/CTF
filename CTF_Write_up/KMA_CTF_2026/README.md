@@ -293,7 +293,7 @@ s.sendline(ss)
 s.interactive()
 ```
 
-![image.png](attachment:b74770b5-0668-4419-ad65-a0bf80e32cd0:image.png)
+<img width="2559" height="1599" alt="image" src="https://github.com/user-attachments/assets/c7d84164-e5dd-4f90-8d05-eef8ad28e280" />
 
 ## DLP
 
