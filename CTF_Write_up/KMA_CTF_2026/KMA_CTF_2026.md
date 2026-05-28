@@ -1,7 +1,4 @@
----
-title: KMA_CTF_2026
 
----
 
 
 ## EaX
@@ -578,6 +575,7 @@ Nếu `k == 1`, bit đó là `0`.
 
 Nếu `k != 1`, bit đó là `1`.
 
+<img width="2559" height="1598" alt="image" src="https://github.com/user-attachments/assets/33e50bcd-46ee-4306-953d-ab8cf9ccfd87" />
 
 
 
