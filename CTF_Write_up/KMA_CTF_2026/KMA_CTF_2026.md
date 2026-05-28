@@ -581,8 +581,6 @@ Nếu `k != 1`, bit đó là `1`.
 
 <img width="2558" height="1598" alt="image" src="https://github.com/user-attachments/assets/0df9a1c0-1ba6-4c71-98d2-dc43155bbad2" />
 
-Thực hiện debug local.
-
 Trong code server.js như sau:
 
 ```py
@@ -694,7 +692,8 @@ app.get('/api/observe', (req, res) => {
       { index: 2, gift_id: '0x' + hex51(g2.id) }
     ]
   });
-});```
+});
+```
 
 + comboSig là hash từ conbo(26 bit)
 + các gift là một phần của 3 output liên tục từ XorShift128Plus
