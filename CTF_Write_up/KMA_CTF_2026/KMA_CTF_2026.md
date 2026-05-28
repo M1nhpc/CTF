@@ -577,8 +577,138 @@ Nếu `k != 1`, bit đó là `1`.
 
 <img width="2559" height="1598" alt="image" src="https://github.com/user-attachments/assets/33e50bcd-46ee-4306-953d-ab8cf9ccfd87" />
 
+## GUGUGAGA
 
+<img width="2558" height="1598" alt="image" src="https://github.com/user-attachments/assets/0df9a1c0-1ba6-4c71-98d2-dc43155bbad2" />
 
+Thực hiện debug local.
 
+Trong code server.js như sau:
 
+```py
+'use strict';
 
+const crypto = require('crypto');
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const { XorShift128Plus, hex64, hex51, chaoticHash } = require('./rng');
+
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
+const PORT = Number(process.env.PORT || 3000);
+const FLAG = process.env.FLAG || 'KMACTF{?????????????????????????????????????????}';
+
+function rand64() { return BigInt('0x' + crypto.randomBytes(8).toString('hex')); }
+
+function newSession() {
+  let s0 = rand64(), s1 = rand64();
+  if (s0 === 0n && s1 === 0n) s1 = 1n;
+  return { rng: new XorShift128Plus(s0, s1), observed: false, redeemed: false };
+}
+
+const sessions = new Map();
+function getSession(req, res) {
+  let sid = req.cookies.sid;
+  if (!sid || !sessions.has(sid)) {
+    sid = crypto.randomBytes(16).toString('hex');
+    sessions.set(sid, newSession());
+    res.cookie('sid', sid, { httpOnly: true, sameSite: 'lax' });
+  }
+  return sessions.get(sid);
+}
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.get('/api/observe', (req, res) => {
+  const sess = getSession(req, res);
+  if (sess.observed) return res.status(403).json({ error: 'Promo window used' });
+  sess.observed = true;
+
+  const g0 = sess.rng.getGiftParts();
+  const g1 = sess.rng.getGiftParts();
+  const g2 = sess.rng.getGiftParts();
+
+  const combo = (g0.secret << 13) | g1.secret;
+  const comboSig = chaoticHash(combo);
+
+  return res.json({
+    combo_sig: comboSig,
+    gifts: [
+      { index: 0, gift_id: '0x' + hex51(g0.id) },
+      { index: 1, gift_id: '0x' + hex51(g1.id) },
+      { index: 2, gift_id: '0x' + hex51(g2.id) }
+    ]
+  });
+});
+
+app.post('/api/redeem', (req, res) => {
+  const sess = getSession(req, res);
+  if (sess.redeemed) return res.status(403).json({ error: 'Already redeemed' });
+
+  const token = req.body && req.body.token;
+  if (typeof token !== 'string' || !/^[0-9a-fA-F]{16}-[0-9a-fA-F]{16}$/.test(token)) {
+    return res.status(400).json({ error: 'Invalid token format' });
+  }
+
+  const expected = `${hex64(sess.rng.next64())}-${hex64(sess.rng.next64())}`;
+  if (token.toLowerCase() === expected) {
+    sess.redeemed = true;
+    return res.json({ ok: true, flag: FLAG });
+  }
+  return res.status(403).json({ ok: false, message: 'Wrong code' });
+});
+
+app.listen(PORT, () => console.log(`Running on :${PORT}`));
+```
+
+ta thấy có 2 api là get api/observe
+<img width="2559" height="1596" alt="image" src="https://github.com/user-attachments/assets/dcee61f6-c0cc-4a1d-ab60-77677e6b9a22" />
+
+và post api/reedem
+
+<img width="2559" height="1599" alt="image" src="https://github.com/user-attachments/assets/e0434907-2c6d-4f84-a408-45a047fb9d67" />
+
+với mỗi lần req tới api/observe ta có như sau:
+
+```py
+app.get('/api/observe', (req, res) => {
+  const sess = getSession(req, res);
+  if (sess.observed) return res.status(403).json({ error: 'Promo window used' });
+  sess.observed = true;
+
+  const g0 = sess.rng.getGiftParts();
+  const g1 = sess.rng.getGiftParts();
+  const g2 = sess.rng.getGiftParts();
+
+  const combo = (g0.secret << 13) | g1.secret;
+  const comboSig = chaoticHash(combo);
+
+  return res.json({
+    combo_sig: comboSig,
+    gifts: [
+      { index: 0, gift_id: '0x' + hex51(g0.id) },
+      { index: 1, gift_id: '0x' + hex51(g1.id) },
+      { index: 2, gift_id: '0x' + hex51(g2.id) }
+    ]
+  });
+});```
+
++ comboSig là hash từ conbo(26 bit)
++ các gift là một phần của 3 output liên tục từ XorShift128Plus
+
+nên mục tiêu của ta sẽ là từ comboSig brute 26 bit để tìm được giá trị combo. Từ giá trị của combo ta có thể tìm được secret của g0, g1 dựa vào `const combo = (g0.secret << 13) | g1.secret;` với secret là 13 bit thấp của output hàm xorshift
+
+```py
+  getGiftParts() {
+    const out = this.next64();
+    return {
+      id: out >> 13n,
+      secret: Number(out & 0x1fffn)
+    };
+  }
+```
+
+phần còn lại thì ta viết lại biểu thức và đưa vào z3 để tính là dễ dàng có flag.
