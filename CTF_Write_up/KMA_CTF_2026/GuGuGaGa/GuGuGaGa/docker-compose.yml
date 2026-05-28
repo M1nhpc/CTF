@@ -1,0 +1,9 @@
+services:
+  gugugaga:
+    build: .
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      PORT: "3000"
+    command: ["node", "--inspect=0.0.0.0:3001", "src/server.js"]

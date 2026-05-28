@@ -1,0 +1,13 @@
+{
+  "name": "GuguGaga",
+  "version": "1.0.0",
+  "description": "A dumb chall is made by a brainrot author",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "cookie-parser": "^1.4.6"
+  }
+}

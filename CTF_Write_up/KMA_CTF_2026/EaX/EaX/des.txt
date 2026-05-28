@@ -1,0 +1,6 @@
+ EaX
+500
+Easy
+
+Fast & Furious.
+nc 67.223.119.69 3638 
